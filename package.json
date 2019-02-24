@@ -1,0 +1,20 @@
+{
+  "name": "cheerio-ptt-parser",
+  "version": "1.0.0",
+  "description": "crawl for ptt with cheeriojs",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "node index.js",
+    "crawl": "node index.js"
+  },
+  "keywords": [],
+  "author": "json-Laing",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "cheerio": "^1.0.0-rc.2"
+  }
+}

@@ -1,0 +1,107 @@
+const axios = require('axios');
+// let request = require('request');
+const fs = require('fs');
+const cheerio = require('cheerio');
+const getPrev = require('./lib/page_parser').getPrev;
+const getPageNumber = require('./lib/page_parser').getPageNumber;
+const LinkParser = require('./lib/page_parser').LinkParser;
+const getPostInfo = require('./lib/article_parser').getPostInfo;
+const getPushInfo = require('./lib/article_parser').getPushInfo;
+const getContent = require('./lib/article_parser').getContent;
+let Board = 'Gossiping';
+let nowPage = 0;
+let writeToFile = false;
+if (process.argv[2]) Board = process.argv[2];
+if (process.argv[3]) {
+  if (process.argv[3]==='true'||process.argv[3]==='false') writeToFile = process.argv[3];
+  else nowPage = process.argv[3];
+}
+console.log(`Board ${Board} / Page ${nowPage} `);
+const parsePageLogic = async(html) => {
+  let $ = cheerio.load(html);
+  let prevLink = '';
+  let links = LinkParser($);
+  prevLink = getPrev($);
+  let pageNum = getPageNumber($);
+  return {
+    links: links,
+    prevLink: prevLink,
+    pageNum: pageNum
+  };
+};
+const parseArticleLogic = async(links) => {
+  let articleInfo = [];
+  for (let idx=0; idx < links.length; idx++) {
+    let item = links[idx];
+    let {link} = item;
+    let articleUrl = `https://www.ptt.cc${link}`;
+    console.log(`articleUrl: ${articleUrl}`);
+    try {
+      const articleResult = await axios.get(`${articleUrl}`, {headers: {
+        'Cookie': 'over18=1'
+      }});
+      
+      if (articleResult.status >= 400) {
+        console.log(`load page error`);
+      } else {
+        let articleHtml = articleResult.data;
+        let _$ = cheerio.load(articleHtml);     
+        let {author, board, title, time} = getPostInfo(_$);
+        const postInfo = {author, board, title, time};
+        let {like, dislike, arrow} = getPushInfo(_$);
+        const pushInfo = {like, dislike, arrow};
+        let {text, article_link, image, link} = getContent(_$);
+        const contentInfo = {text, article_link, image, link};
+        articleInfo.push({postInfo,pushInfo, contentInfo});
+      }
+    } catch (e) {
+      console.log(`[load article error] :${e.toString()}`);
+      throw e;
+    }
+  }
+  return articleInfo;
+};
+
+(async()=>{
+  // while(true) {
+    console.log(`start crawl ${Board} new page`);
+    console.time('startParse');
+    try {
+      let result = await axios.get(`https://www.ptt.cc/bbs/${Board}/index${nowPage}.html`, {headers: {
+          'Cookie': 'over18=1'
+      }});
+      if (result.status>=400) {
+        console.log(`頁面不存在`);
+      } else {
+        let html = result.data;
+        // parse Page logic
+        let {prevLink, pageNum, links} = await parsePageLogic(html);
+        console.log(`prevLink`, prevLink);
+        console.log(`pageNum`, pageNum);
+        console.log(`links`, links);
+        
+        
+        nowPage = pageNum;
+        // load links logic
+        let articleInfo = [];
+        articleInfo = await parseArticleLogic(links);
+        if (writeToFile==='true') {
+          if (!fs.existsSync('./data')) fs.mkdirSync('./data');
+          if (!fs.existsSync(`./data/${Board}`)) fs.mkdirSync(`./data/${Board}`);
+          fs.writeFileSync(
+            `./data/${Board}/${Board}_${nowPage}.json`,
+            JSON.stringify(articleInfo),
+            { flag: 'w' }
+          );  
+          console.log(`Saved as data/${Board}/${Board}_${nowPage}.json`);
+        }
+        console.log(`proccessed index ${Board}/${Board}_${nowPage}.json`)
+        nowPage = 0;
+        // if (nowPage===0) break;
+      }
+    } catch (e) {
+      console.log(`[error] load page error: ${e.toString()}`);
+    }
+    console.timeEnd('startParse');
+  // }
+})();
