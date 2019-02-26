@@ -8,13 +8,23 @@
   },
   "scripts": {
     "test": "node index.js",
-    "crawl": "node index.js"
+    "crawl": "node index.js",
+    "ws-server": "nodemon ws-server"
   },
   "keywords": [],
   "author": "json-Laing",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.18.0",
-    "cheerio": "^1.0.0-rc.2"
+    "cheerio": "^1.0.0-rc.2",
+    "express": "^4.16.4",
+    "log4js": "^1.1.1",
+    "moment": "^2.24.0",
+    "mongoose": "^5.4.15",
+    "websocket": "^1.0.28",
+    "ws": "^6.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.10"
   }
 }

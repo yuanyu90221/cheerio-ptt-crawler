@@ -8,6 +8,9 @@ const LinkParser = require('./lib/page_parser').LinkParser;
 const getPostInfo = require('./lib/article_parser').getPostInfo;
 const getPushInfo = require('./lib/article_parser').getPushInfo;
 const getContent = require('./lib/article_parser').getContent;
+const logger = require('./logger/logger');
+const orgLog = require('console');
+const {info} =logger;
 let Board = 'Gossiping';
 let nowPage = 0;
 let writeToFile = false;
@@ -16,7 +19,8 @@ if (process.argv[3]) {
   if (process.argv[3]==='true'||process.argv[3]==='false') writeToFile = process.argv[3];
   else nowPage = process.argv[3];
 }
-console.log(`Board ${Board} / Page ${nowPage} `);
+console.log(`Board ${Board} / Page ${nowPage} `)
+info.info(`Board ${Board} / Page ${nowPage} `);
 const parsePageLogic = async(html) => {
   let $ = cheerio.load(html);
   let prevLink = '';
@@ -35,14 +39,16 @@ const parseArticleLogic = async(links) => {
     let item = links[idx];
     let {link} = item;
     let articleUrl = `https://www.ptt.cc${link}`;
-    console.log(`articleUrl: ${articleUrl}`);
+    orgLog.log(`articleUrl: ${articleUrl}`);
+    info.info(`articleUrl: ${articleUrl}`)
     try {
       const articleResult = await axios.get(`${articleUrl}`, {headers: {
         'Cookie': 'over18=1'
       }});
       
       if (articleResult.status >= 400) {
-        console.log(`load page error`);
+        orgLog.log(`load page error`);
+        info.error(`load page error`);
       } else {
         let articleHtml = articleResult.data;
         let _$ = cheerio.load(articleHtml);     
@@ -55,7 +61,8 @@ const parseArticleLogic = async(links) => {
         articleInfo.push({postInfo,pushInfo, contentInfo});
       }
     } catch (e) {
-      console.log(`[load article error] :${e.toString()}`);
+      orgLog.log(`[load article error] :${e.toString()}`);
+      info.error(`[load article error] :${e.toString()}`);
       throw e;
     }
   }
@@ -64,22 +71,23 @@ const parseArticleLogic = async(links) => {
 
 (async()=>{
   // while(true) {
-    console.log(`start crawl ${Board} new page`);
-    console.time('startParse');
+    orgLog.log(`start crawl ${Board} new page`);
+    info.info(`start crawl ${Board} new page`);
+    orgLog.time('startParse');
     try {
       let result = await axios.get(`https://www.ptt.cc/bbs/${Board}/index${nowPage}.html`, {headers: {
           'Cookie': 'over18=1'
       }});
       if (result.status>=400) {
-        console.log(`頁面不存在`);
+        orgLog.error(`https://www.ptt.cc/bbs/${Board}/index${nowPage}.html not exist`);
+        info.error(`https://www.ptt.cc/bbs/${Board}/index${nowPage}.html not exist`);
       } else {
         let html = result.data;
         // parse Page logic
         let {prevLink, pageNum, links} = await parsePageLogic(html);
-        console.log(`prevLink`, prevLink);
-        console.log(`pageNum`, pageNum);
-        console.log(`links`, links);
-        
+        orgLog.log(`prevLink`, prevLink);
+        orgLog.log(`pageNum`, pageNum);
+        orgLog.log(`links`, links);
         
         nowPage = pageNum;
         // load links logic
@@ -93,15 +101,18 @@ const parseArticleLogic = async(links) => {
             JSON.stringify(articleInfo),
             { flag: 'w' }
           );  
-          console.log(`Saved as data/${Board}/${Board}_${nowPage}.json`);
+          orgLog.log(`Saved as data/${Board}/${Board}_${nowPage}.json`);
+          info.info(`Saved as data/${Board}/${Board}_${nowPage}.json`);
         }
-        console.log(`proccessed index ${Board}/${Board}_${nowPage}.json`)
+        orgLog.log(`proccessed index ${Board}/${Board}_${nowPage}.json`);
+        info.info(`proccessed index ${Board}/${Board}_${nowPage}.json`);
         nowPage = 0;
         // if (nowPage===0) break;
       }
     } catch (e) {
-      console.log(`[error] load page error: ${e.toString()}`);
+      orgLog.error(`[error] load page error: ${e.toString()}`);
+      info.error(`[error] load page error: ${e.toString()}`);
     }
-    console.timeEnd('startParse');
+    orgLog.timeEnd('startParse');
   // }
 })();
