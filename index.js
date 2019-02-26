@@ -1,19 +1,13 @@
 const axios = require('axios');
-// let request = require('request');
 const fs = require('fs');
 const cheerio = require('cheerio');
-const getPrev = require('./lib/page_parser').getPrev;
-const getPageNumber = require('./lib/page_parser').getPageNumber;
-const LinkParser = require('./lib/page_parser').LinkParser;
-const getPostInfo = require('./lib/article_parser').getPostInfo;
-const getPushInfo = require('./lib/article_parser').getPushInfo;
-const getContent = require('./lib/article_parser').getContent;
+const { getPrev, getPageNumber, LinkParser }= require('./lib/page_parser');
+const { getPostInfo, getPushInfo, getContent }= require('./lib/article_parser');
 const logger = require('./logger/logger');
 const orgLog = require('console');
 const {info, warn} =logger;
-let Board = 'Gossiping';
-let nowPage = 0;
-let writeToFile = false;
+// set up incoming params
+let Board = 'Gossiping', nowPage = 0, writeToFile = false;
 if (process.argv[2]) Board = process.argv[2];
 if (process.argv[3]) {
   if (process.argv[3]==='true'||process.argv[3]==='false') writeToFile = process.argv[3];
@@ -21,6 +15,11 @@ if (process.argv[3]) {
 }
 console.log(`Board ${Board} / Page ${nowPage} `)
 info.info(`Board ${Board} / Page ${nowPage} `);
+/**
+ * @description parsePageLogic
+ * 
+ * @param {html} html 
+ */
 const parsePageLogic = async(html) => {
   let $ = cheerio.load(html);
   let prevLink = '';
@@ -33,6 +32,11 @@ const parsePageLogic = async(html) => {
     pageNum: pageNum
   };
 };
+/**
+ * @description parseArticleLogic
+ * 
+ * @param {Array} links 
+ */
 const parseArticleLogic = async(links) => {
   let articleInfo = [];
   for (let idx=0; idx < links.length; idx++) {
@@ -68,9 +72,11 @@ const parseArticleLogic = async(links) => {
   }
   return articleInfo;
 };
-
+/**
+ * @description do the crawl logic
+ */
 (async()=>{
-  // while(true) {
+  while(true) {
     orgLog.log(`start crawl ${Board} new page`);
     info.info(`start crawl ${Board} new page`);
     orgLog.time('startParse');
@@ -109,13 +115,13 @@ const parseArticleLogic = async(links) => {
         }
         orgLog.log(`proccessed index ${Board}/${Board}_${nowPage}.json`);
         info.info(`proccessed index ${Board}/${Board}_${nowPage}.json`);
-        nowPage = 0;
-        // if (nowPage===0) break;
+        nowPage -= 1;
+        if (nowPage===0) break;
       }
     } catch (e) {
       orgLog.error(`[error] load page error: ${e.toString()}`);
       info.error(`[error] load page error: ${e.toString()}`);
     }
     orgLog.timeEnd('startParse');
-  // }
+  }
 })();
