@@ -10,7 +10,7 @@ const getPushInfo = require('./lib/article_parser').getPushInfo;
 const getContent = require('./lib/article_parser').getContent;
 const logger = require('./logger/logger');
 const orgLog = require('console');
-const {info} =logger;
+const {info, warn} =logger;
 let Board = 'Gossiping';
 let nowPage = 0;
 let writeToFile = false;
@@ -86,8 +86,11 @@ const parseArticleLogic = async(links) => {
         // parse Page logic
         let {prevLink, pageNum, links} = await parsePageLogic(html);
         orgLog.log(`prevLink`, prevLink);
+        warn.info(`prevLink`, prevLink);
         orgLog.log(`pageNum`, pageNum);
+        warn.info(`pageNum`, pageNum);
         orgLog.log(`links`, links);
+        warn.info(`links`, links);
         
         nowPage = pageNum;
         // load links logic
