@@ -5,7 +5,7 @@ const { getPrev, getPageNumber, LinkParser }= require('./lib/page_parser');
 const { getPostInfo, getPushInfo, getContent }= require('./lib/article_parser');
 const logger = require('./logger/logger');
 const orgLog = require('console');
-const {info, warn} =logger;
+const {info, warn, error} =logger;
 // set up incoming params
 let Board = 'Gossiping', nowPage = 0, writeToFile = false;
 if (process.argv[2]) Board = process.argv[2];
@@ -52,7 +52,7 @@ const parseArticleLogic = async(links) => {
       
       if (articleResult.status >= 400) {
         orgLog.log(`load page error`);
-        info.error(`load page error`);
+        error.error(`load page error`);
       } else {
         let articleHtml = articleResult.data;
         let _$ = cheerio.load(articleHtml);     
@@ -66,7 +66,7 @@ const parseArticleLogic = async(links) => {
       }
     } catch (e) {
       orgLog.log(`[load article error] :${e.toString()}`);
-      info.error(`[load article error] :${e.toString()}`);
+      error.error(`[load article error] :${e.toString()}`);
       throw e;
     }
   }
@@ -76,52 +76,62 @@ const parseArticleLogic = async(links) => {
  * @description do the crawl logic
  */
 (async()=>{
-  while(true) {
-    orgLog.log(`start crawl ${Board} new page`);
-    info.info(`start crawl ${Board} new page`);
-    orgLog.time('startParse');
-    try {
-      let result = await axios.get(`https://www.ptt.cc/bbs/${Board}/index${nowPage}.html`, {headers: {
-          'Cookie': 'over18=1'
-      }});
-      if (result.status>=400) {
-        orgLog.error(`https://www.ptt.cc/bbs/${Board}/index${nowPage}.html not exist`);
-        info.error(`https://www.ptt.cc/bbs/${Board}/index${nowPage}.html not exist`);
-      } else {
-        let html = result.data;
-        // parse Page logic
-        let {prevLink, pageNum, links} = await parsePageLogic(html);
-        orgLog.log(`prevLink`, prevLink);
-        warn.info(`prevLink`, prevLink);
-        orgLog.log(`pageNum`, pageNum);
-        warn.info(`pageNum`, pageNum);
-        orgLog.log(`links`, links);
-        warn.info(`links`, links);
-        
-        nowPage = pageNum;
-        // load links logic
-        let articleInfo = [];
-        articleInfo = await parseArticleLogic(links);
-        if (writeToFile==='true') {
-          if (!fs.existsSync('./data')) fs.mkdirSync('./data');
-          if (!fs.existsSync(`./data/${Board}`)) fs.mkdirSync(`./data/${Board}`);
-          fs.writeFileSync(
-            `./data/${Board}/${Board}_${nowPage}.json`,
-            JSON.stringify(articleInfo),
-            { flag: 'w' }
-          );  
-          orgLog.log(`Saved as data/${Board}/${Board}_${nowPage}.json`);
-          info.info(`Saved as data/${Board}/${Board}_${nowPage}.json`);
+  do {
+    let totalPage = 0;
+    while(true) {
+      orgLog.log(`start crawl ${Board} new page`);
+      info.info(`start crawl ${Board} new page`);
+      orgLog.time('startParse');
+      let requestURL="";
+      try {
+        requestURL = `https://www.ptt.cc/bbs/${Board}/index${nowPage}.html`;
+        let result = await axios.get(requestURL, {headers: {
+            'Cookie': 'over18=1'
+        }});
+        if (result.status>=400) {
+          orgLog.error(`${requestURL} not exist`);
+          error.error(`${requestURL} not exist`);
+        } else {
+          let html = result.data;
+          // parse Page logic
+          let {prevLink, pageNum, links} = await parsePageLogic(html);
+          orgLog.log(`prevLink`, prevLink);
+          warn.info(`prevLink`, prevLink);
+          orgLog.log(`pageNum`, pageNum);
+          warn.info(`pageNum`, pageNum);
+          orgLog.log(`links`, links);
+          warn.info(`links`, links);
+          if(nowPage===0){
+            totalPage = pageNum;
+          }  
+          nowPage = pageNum;
+          // load links logic
+          let articleInfo = [];
+          articleInfo = await parseArticleLogic(links);
+          if (writeToFile==='true') {
+            if (!fs.existsSync('./data')) fs.mkdirSync('./data');
+            if (!fs.existsSync(`./data/${Board}`)) fs.mkdirSync(`./data/${Board}`);
+            fs.writeFileSync(
+              `./data/${Board}/${Board}_${nowPage}.json`,
+              JSON.stringify(articleInfo),
+              { flag: 'w' }
+            );  
+            orgLog.log(`Saved as data/${Board}/${Board}_${nowPage}.json`);
+            info.info(`Saved as data/${Board}/${Board}_${nowPage}.json`);
+          }
+          orgLog.log(`proccessed index ${Board}/${Board}_${nowPage}.json`);
+          info.info(`proccessed index ${Board}/${Board}_${nowPage}.json`);
+          nowPage -= 1;
+          orgLog.log(`totalPage: ${totalPage}, proccessed percentage: ${(100 - ((nowPage/totalPage)*100)).toFixed(2)}% for ${Board}`);
+          info.info(`totalPage: ${totalPage},proccessed percentage: ${(100 - ((nowPage/totalPage)*100)).toFixed(2)}% for ${Board}`);
+          if (nowPage===0) break;
         }
-        orgLog.log(`proccessed index ${Board}/${Board}_${nowPage}.json`);
-        info.info(`proccessed index ${Board}/${Board}_${nowPage}.json`);
-        nowPage -= 1;
-        if (nowPage===0) break;
+      } catch (e) {
+        orgLog.error(`[error] request url: ${requestURL}, load page error: ${e.toString()}`);
+        error.error(`[error] request url: ${requestURL}, load page error: ${e.toString()}`);
+        nowPage -=1;
       }
-    } catch (e) {
-      orgLog.error(`[error] load page error: ${e.toString()}`);
-      info.error(`[error] load page error: ${e.toString()}`);
+      orgLog.timeEnd('startParse');
     }
-    orgLog.timeEnd('startParse');
-  }
+  } while(nowPage===0);
 })();
