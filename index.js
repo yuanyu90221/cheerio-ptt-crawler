@@ -4,7 +4,7 @@ const cheerio = require('cheerio');
 const { parsePageLogic } = require('./lib/page_parser');
 const { parseArticleLogic } = require('./lib/article_parser');
 const orgLog = require('console');
-const { setupLogPath ,info, warn, error} = require('./logger/logger');
+const { setupLogPath ,info, warn, error, getNewLogger} = require('./logger/logger');
 // set up incoming params
 let Board = 'Gossiping', nowPage = 0, writeToFile = false;
 /**
@@ -25,16 +25,17 @@ const initSetup = ()=> {
   // setupLogPath(Board);
 };
 // do init setup
-initSetup();
+// initSetup();
 /**
  * @description do the crawl logic
  */
 const pttCrawler = async(Board='Gossiping', nowPage=0, writeToFile='false')=>{
     let totalPage = 0;
-    
+    setupLogPath(Board);
+    let infoLogger = info(Board), errorLogger = error(Board), warnLogger = warn(Board);
     while(true) {
       orgLog.log(`start crawl ${Board} new page, nowPage: ${nowPage}`);
-      info.info(`start crawl ${Board} new page, nowPage: ${nowPage}`);
+      infoLogger.info(`start crawl ${Board} new page, nowPage: ${nowPage}`);
       orgLog.time('startParse');
       let requestURL="";
       try {
@@ -50,18 +51,18 @@ const pttCrawler = async(Board='Gossiping', nowPage=0, writeToFile='false')=>{
           // parse Page logic
           let {prevLink, pageNum, links} = await parsePageLogic(cheerio, html);
           orgLog.log(`prevLink`, prevLink);
-          warn.info(`prevLink`, prevLink);
+          warnLogger.info(`prevLink`, prevLink);
           orgLog.log(`pageNum`, pageNum);
-          warn.info(`pageNum`, pageNum);
+          warnLogger.info(`pageNum`, pageNum);
           orgLog.log(`links`, links);
-          warn.info(`links`, links);
+          warnLogger.info(`links`, links);
           if(totalPage===0){
             totalPage = pageNum;
           }  
           nowPage = pageNum;
           // load links logic
           let articleInfo = [];
-          articleInfo = await parseArticleLogic(cheerio, axios, links, orgLog, info, error);
+          articleInfo = await parseArticleLogic(cheerio, axios, links, orgLog, infoLogger, errorLogger);
           if (writeToFile==='true') {
             if (!fs.existsSync('./data')) fs.mkdirSync('./data');
             if (!fs.existsSync(`./data/${Board}`)) fs.mkdirSync(`./data/${Board}`);
@@ -71,24 +72,24 @@ const pttCrawler = async(Board='Gossiping', nowPage=0, writeToFile='false')=>{
               { flag: 'w' }
             );  
             orgLog.log(`Saved as data/${Board}/${Board}_${nowPage}.json`);
-            info.info(`Saved as data/${Board}/${Board}_${nowPage}.json`);
+            infoLogger.info(`Saved as data/${Board}/${Board}_${nowPage}.json`);
           }
           orgLog.log(`proccessed index ${Board}/${Board}_${nowPage}.json`);
-          info.info(`proccessed index ${Board}/${Board}_${nowPage}.json`);
+          infoLogger.info(`proccessed index ${Board}/${Board}_${nowPage}.json`);
           nowPage -= 1;
           orgLog.log(`totalPage: ${totalPage}, nowPage: ${nowPage}, proccessed percentage: ${(100 - ((nowPage/totalPage)*100)).toFixed(2)}% for ${Board}`);
-          info.info(`totalPage: ${totalPage}, nowPage: ${nowPage}, proccessed percentage: ${(100 - ((nowPage/totalPage)*100)).toFixed(2)}% for ${Board}`);
+          infoLogger.info(`totalPage: ${totalPage}, nowPage: ${nowPage}, proccessed percentage: ${(100 - ((nowPage/totalPage)*100)).toFixed(2)}% for ${Board}`);
           if (nowPage===0) break;
         }
       } catch (e) {
         let status = e.response.status;
         let errHeaders = e.response.headers;
         orgLog.error(`[error] request url: ${requestURL}, load page error status: ${status}`);
-        error.error(`[error] request url: ${requestURL}, load page error status: ${status}`); 
+        errorLogger.error(`[error] request url: ${requestURL}, load page error status: ${status}`); 
         orgLog.error(`[error] request url: ${requestURL}, load page error headers:`, errHeaders);
-        error.error(`[error] request url: ${requestURL}, load page error headers:`, errHeaders) 
+        errorLogger.error(`[error] request url: ${requestURL}, load page error headers:`, errHeaders) 
         orgLog.error(`[error] request url: ${requestURL}, load page error: ${e.toString()}`);
-        error.error(`[error] request url: ${requestURL}, load page error: ${e.toString()}`);
+        errorLogger.error(`[error] request url: ${requestURL}, load page error: ${e.toString()}`);
         nowPage -=1;
       }
       orgLog.timeEnd('startParse');

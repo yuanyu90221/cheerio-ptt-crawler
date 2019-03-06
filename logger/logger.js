@@ -1,56 +1,100 @@
 // Set Logger
 let log4js = require('log4js');
 const {isRunOnDocker} = require('../config/mongodb.json')
-// const setupLogPath = (Board) => {
-const logPath = isRunOnDocker? `/data/logs`:`logs`;
-// log4js Appender的設定
-log4js.configure({
-    appenders:[
-        {
-            type: 'console',    //輸出為console
-            category: 'console' //別名為console
-        }, // console show
-        {
+let appendersCurrent = [];
+let BoardsList = [];
+const setupLogPath = (Board) => {
+    
+    BoardsList.push(Board);
+    // console.log(BoardsList);
+    let appenders = [{
+        type: 'console',    //輸出為console
+        category: 'console' //別名為console
+    }];
+    BoardsList.forEach(BoardName => {
+        const logPath = isRunOnDocker? `/data/logs/${BoardName}`:`logs/${BoardName}`;
+        appenders.push({
             type: 'dateFile',                                     //輸出為file
             filename: `${logPath}/access`, //輸出檔案名
             alwaysIncludePattern: true,
             pattern: "-yyyy-MM-dd.log",
             daysToKeep: 2,                                     //每10最多存最新10個檔案 
-            category: 'info'                                 //別名為console
-        },
-        {
-            type: 'dateFile',
-            filename: `${logPath}/error`,
+            category: `info${BoardName}`                                 //別名為console
+        });
+        appenders.push({
+            type: 'dateFile',                                     //輸出為file
+            filename: `${logPath}/output`, //輸出檔案名
             alwaysIncludePattern: true,
             pattern: "-yyyy-MM-dd.log",
-            daysToKeep: 2,
-            category: 'error'
-        },
-        {
-            type: 'dateFile',
-            filename: `${logPath}/output`,
+            daysToKeep: 2,                                     //每10最多存最新10個檔案 
+            category: `warn${BoardName}`                                 //別名為console
+        });
+        appenders.push({
+            type: 'dateFile',                                     //輸出為file
+            filename: `${logPath}/error`, //輸出檔案名
             alwaysIncludePattern: true,
             pattern: "-yyyy-MM-dd.log",
-            daysToKeep: 2,
-            category: 'warn'
-        }
-    ],
-    replaceConsole: true
-});
+            daysToKeep: 2,                                     //每10最多存最新10個檔案 
+            category: `error${Board}`                                 //別名為console
+        });
+    })
+    log4js.clearAppenders();
+    // log4js Appender的設定
+    log4js.configure({
+        appenders,
+        replaceConsole: true
+    });
+};
+// const logPath = isRunOnDocker? `/data/logs`:`logs`;
+// log4js.configure({
+//     appenders:[
+//         {
+//             type: 'console',    //輸出為console
+//             category: 'console' //別名為console
+//         }, // console show
+//         {
+//             type: 'dateFile',                                     //輸出為file
+//             filename: `${logPath}/access`, //輸出檔案名
+//             alwaysIncludePattern: true,
+//             pattern: "-yyyy-MM-dd.log",
+//             daysToKeep: 2,                                     //每10最多存最新10個檔案 
+//             category: `info`                                 //別名為console
+//         },
+//         {
+//             type: 'dateFile',
+//             filename: `${logPath}/error`,
+//             alwaysIncludePattern: true,
+//             pattern: "-yyyy-MM-dd.log",
+//             daysToKeep: 2,
+//             category: `error`
+//         },
+//         {
+//             type: 'dateFile',
+//             filename: `${logPath}/output`,
+//             alwaysIncludePattern: true,
+//             pattern: "-yyyy-MM-dd.log",
+//             daysToKeep: 2,
+//             category: `warn`
+//         }
+//     ],
+//     replaceConsole: true
+// });
+const getNewLogger = (Name) => {
+    let logger = log4js.getLogger(Name);
+    logger.setLevel('INFO');
 
-let logger = log4js.getLogger('info');
-logger.setLevel('INFO');
-
-let log = log4js.connectLogger(logger, {level: 'auto', format:':method :url'})
+    let log = log4js.connectLogger(logger, {level: 'auto', format:':method :url'});
+    return logger;
+};
 /**
  * findlogger
  * 
  * @param {*} name 
  */
-const findlogger = (name)=>{
-    let logger = log4js.getLogger(name);
+const findlogger = (LogLV)=>(name)=>{
+    let logger = log4js.getLogger(`${LogLV}${name}`);
     let logLevel = 'INFO';
-    switch(name){
+    switch(LogLV){
         case 'info':
             logLevel = 'INFO';
             break;
@@ -68,10 +112,10 @@ const findlogger = (name)=>{
     return logger;
 }
 module.exports = {
-    log: log,
-    logger: findlogger,
     error: findlogger('error'),
     info: findlogger('info'),
     warn: findlogger('warn'),
-    console: findlogger('console')
+    console: findlogger('console'),
+    setupLogPath: setupLogPath,
+    getNewLogger: getNewLogger
 }
