@@ -22,16 +22,16 @@ const initSetup = ()=> {
         nowPage = process.argv[3];
     }
   }
-  setupLogPath(Board);
+  // setupLogPath(Board);
 };
 // do init setup
 initSetup();
 /**
  * @description do the crawl logic
  */
-(async()=>{
-  do {
+const pttCrawler = async(Board='Gossiping', nowPage=0, writeToFile='false')=>{
     let totalPage = 0;
+    
     while(true) {
       orgLog.log(`start crawl ${Board} new page, nowPage: ${nowPage}`);
       info.info(`start crawl ${Board} new page, nowPage: ${nowPage}`);
@@ -93,5 +93,8 @@ initSetup();
       }
       orgLog.timeEnd('startParse');
     }
-  } while(nowPage===0);
-})();
+};
+
+module.exports = {
+  pttCrawler: pttCrawler
+};
