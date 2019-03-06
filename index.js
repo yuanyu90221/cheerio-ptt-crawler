@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 const cheerio = require('cheerio');
 const { getPrev, getPageNumber, LinkParser }= require('./lib/page_parser');
-const { getPostInfo, getPushInfo, getContent }= require('./lib/article_parser');
+const { parseArticleLogic }= require('./lib/article_parser');
 const logger = require('./logger/logger');
 const orgLog = require('console');
 const { setupLogPath ,info, warn, error} =logger;
@@ -32,53 +32,6 @@ const parsePageLogic = async(html) => {
     prevLink: prevLink,
     pageNum: pageNum
   };
-};
-/**
- * @description parseArticleLogic
- * 
- * @param {Array} links 
- */
-const parseArticleLogic = async(links) => {
-  let articleInfo = [];
-  for (let idx=0; idx < links.length; idx++) {
-    let item = links[idx];
-    let {link} = item;
-    let articleUrl = `https://www.ptt.cc${link}`;
-    orgLog.log(`articleUrl: ${articleUrl}`);
-    info.info(`articleUrl: ${articleUrl}`)
-    try {
-      const articleResult = await axios.get(`${articleUrl}`, {headers: {
-        'Cookie': 'over18=1'
-      }});
-      
-      if (articleResult.status >= 400) {
-        orgLog.log(`load page error`);
-        error.error(`load page error`);
-      } else {
-        let articleHtml = articleResult.data;
-        let _$ = cheerio.load(articleHtml);     
-        let {author, board, title, time} = getPostInfo(_$);
-        const postInfo = {author, board, title, time};
-        let {like, dislike, arrow} = getPushInfo(_$);
-        const pushInfo = {like, dislike, arrow};
-        let {text, article_link, image, link} = getContent(_$);
-        const contentInfo = {text, article_link, image, link};
-        articleInfo.push({postInfo,pushInfo,contentInfo});
-      }
-    } catch (e) {
-      let articleStatus = e.response.status;
-      orgLog.log(`[load article error] requestArticle: ${articleUrl}, requestStatus:${articleStatus}, error:${e.toString()}`);
-      error.error(`[load article error] requestArticle: ${articleUrl}, requestStatus:${articleStatus}, error:${e.toString()}`);
-      if (articleStatus!==404) {
-        throw e;
-      } else {
-        continue;
-      } 
-    }
-  }
-  orgLog.log(`[parseArticleLogic] articleInfo.length: ${articleInfo.length},links.length: ${links.length}`);
-  info.info(`[parseArticleLogic] articleInfo.length: ${articleInfo.length},links.length: ${links.length}`);
-  return articleInfo;
 };
 /**
  * @description do the crawl logic
@@ -115,7 +68,7 @@ const parseArticleLogic = async(links) => {
           nowPage = pageNum;
           // load links logic
           let articleInfo = [];
-          articleInfo = await parseArticleLogic(links);
+          articleInfo = await parseArticleLogic(cheerio, axios, links, orgLog, info, error);
           if (writeToFile==='true') {
             if (!fs.existsSync('./data')) fs.mkdirSync('./data');
             if (!fs.existsSync(`./data/${Board}`)) fs.mkdirSync(`./data/${Board}`);
