@@ -1,8 +1,8 @@
 const axios = require('axios');
 const fs = require('fs');
 const cheerio = require('cheerio');
-const { getPrev, getPageNumber, LinkParser }= require('./lib/page_parser');
-const { parseArticleLogic }= require('./lib/article_parser');
+const { parsePageLogic } = require('./lib/page_parser');
+const { parseArticleLogic } = require('./lib/article_parser');
 const logger = require('./logger/logger');
 const orgLog = require('console');
 const { setupLogPath ,info, warn, error} =logger;
@@ -16,23 +16,6 @@ if (process.argv[3]) {
 setupLogPath(Board);
 console.log(`Board ${Board} / Page ${nowPage} `)
 info.info(`Board ${Board} / Page ${nowPage} `);
-/**
- * @description parsePageLogic
- * 
- * @param {html} html 
- */
-const parsePageLogic = async(html) => {
-  let $ = cheerio.load(html);
-  let prevLink = '';
-  let links = LinkParser($);
-  prevLink = getPrev($);
-  let pageNum = getPageNumber($);
-  return {
-    links: links,
-    prevLink: prevLink,
-    pageNum: pageNum
-  };
-};
 /**
  * @description do the crawl logic
  */
@@ -55,7 +38,7 @@ const parsePageLogic = async(html) => {
         } else {
           let html = result.data;
           // parse Page logic
-          let {prevLink, pageNum, links} = await parsePageLogic(html);
+          let {prevLink, pageNum, links} = await parsePageLogic(cheerio, html);
           orgLog.log(`prevLink`, prevLink);
           warn.info(`prevLink`, prevLink);
           orgLog.log(`pageNum`, pageNum);
