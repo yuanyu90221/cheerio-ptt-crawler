@@ -3,19 +3,29 @@ const fs = require('fs');
 const cheerio = require('cheerio');
 const { parsePageLogic } = require('./lib/page_parser');
 const { parseArticleLogic } = require('./lib/article_parser');
-const logger = require('./logger/logger');
 const orgLog = require('console');
-const { setupLogPath ,info, warn, error} =logger;
+const { setupLogPath ,info, warn, error} = require('./logger/logger');
 // set up incoming params
 let Board = 'Gossiping', nowPage = 0, writeToFile = false;
-if (process.argv[2]) Board = process.argv[2];
-if (process.argv[3]) {
-  if (process.argv[3]==='true'||process.argv[3]==='false') writeToFile = process.argv[3];
-  else nowPage = process.argv[3];
-}
-setupLogPath(Board);
-console.log(`Board ${Board} / Page ${nowPage} `)
-info.info(`Board ${Board} / Page ${nowPage} `);
+/**
+ * @description initSetup
+ */
+const initSetup = ()=> {
+  if (process.argv[2]) Board = process.argv[2];
+  if (process.argv[3]) {
+    switch (process.argv[3]) {
+      case 'true':
+      case 'false':
+        writeToFile = process.argv[3];
+        break;
+      default:
+        nowPage = process.argv[3];
+    }
+  }
+  setupLogPath(Board);
+};
+// do init setup
+initSetup();
 /**
  * @description do the crawl logic
  */
