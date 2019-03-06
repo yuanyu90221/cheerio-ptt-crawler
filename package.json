@@ -7,8 +7,8 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "node index.js",
-    "crawl": "node index.js",
+    "test": "node crawlerLogic",
+    "crawl": "node crawlerLogic",
     "ws-server": "nodemon ws-server"
   },
   "keywords": [],

@@ -45,40 +45,6 @@ const setupLogPath = (Board) => {
         replaceConsole: true
     });
 };
-// const logPath = isRunOnDocker? `/data/logs`:`logs`;
-// log4js.configure({
-//     appenders:[
-//         {
-//             type: 'console',    //輸出為console
-//             category: 'console' //別名為console
-//         }, // console show
-//         {
-//             type: 'dateFile',                                     //輸出為file
-//             filename: `${logPath}/access`, //輸出檔案名
-//             alwaysIncludePattern: true,
-//             pattern: "-yyyy-MM-dd.log",
-//             daysToKeep: 2,                                     //每10最多存最新10個檔案 
-//             category: `info`                                 //別名為console
-//         },
-//         {
-//             type: 'dateFile',
-//             filename: `${logPath}/error`,
-//             alwaysIncludePattern: true,
-//             pattern: "-yyyy-MM-dd.log",
-//             daysToKeep: 2,
-//             category: `error`
-//         },
-//         {
-//             type: 'dateFile',
-//             filename: `${logPath}/output`,
-//             alwaysIncludePattern: true,
-//             pattern: "-yyyy-MM-dd.log",
-//             daysToKeep: 2,
-//             category: `warn`
-//         }
-//     ],
-//     replaceConsole: true
-// });
 const getNewLogger = (Name) => {
     let logger = log4js.getLogger(Name);
     logger.setLevel('INFO');
