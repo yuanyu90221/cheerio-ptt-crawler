@@ -5,7 +5,7 @@ const { getPrev, getPageNumber, LinkParser }= require('./lib/page_parser');
 const { getPostInfo, getPushInfo, getContent }= require('./lib/article_parser');
 const logger = require('./logger/logger');
 const orgLog = require('console');
-const {info, warn, error} =logger;
+const { setupLogPath ,info, warn, error} =logger;
 // set up incoming params
 let Board = 'Gossiping', nowPage = 0, writeToFile = false;
 if (process.argv[2]) Board = process.argv[2];
@@ -13,6 +13,7 @@ if (process.argv[3]) {
   if (process.argv[3]==='true'||process.argv[3]==='false') writeToFile = process.argv[3];
   else nowPage = process.argv[3];
 }
+setupLogPath(Board);
 console.log(`Board ${Board} / Page ${nowPage} `)
 info.info(`Board ${Board} / Page ${nowPage} `);
 /**
@@ -62,14 +63,21 @@ const parseArticleLogic = async(links) => {
         const pushInfo = {like, dislike, arrow};
         let {text, article_link, image, link} = getContent(_$);
         const contentInfo = {text, article_link, image, link};
-        articleInfo.push({postInfo,pushInfo, contentInfo});
+        articleInfo.push({postInfo,pushInfo,contentInfo});
       }
     } catch (e) {
-      orgLog.log(`[load article error] :${e.toString()}`);
-      error.error(`[load article error] :${e.toString()}`);
-      throw e;
+      let articleStatus = e.response.status;
+      orgLog.log(`[load article error] requestArticle: ${articleUrl}, requestStatus:${articleStatus}, error:${e.toString()}`);
+      error.error(`[load article error] requestArticle: ${articleUrl}, requestStatus:${articleStatus}, error:${e.toString()}`);
+      if (articleStatus!==404) {
+        throw e;
+      } else {
+        continue;
+      } 
     }
   }
+  orgLog.log(`[parseArticleLogic] articleInfo.length: ${articleInfo.length},links.length: ${links.length}`);
+  info.info(`[parseArticleLogic] articleInfo.length: ${articleInfo.length},links.length: ${links.length}`);
   return articleInfo;
 };
 /**
@@ -79,8 +87,8 @@ const parseArticleLogic = async(links) => {
   do {
     let totalPage = 0;
     while(true) {
-      orgLog.log(`start crawl ${Board} new page`);
-      info.info(`start crawl ${Board} new page`);
+      orgLog.log(`start crawl ${Board} new page, nowPage: ${nowPage}`);
+      info.info(`start crawl ${Board} new page, nowPage: ${nowPage}`);
       orgLog.time('startParse');
       let requestURL="";
       try {
@@ -101,7 +109,7 @@ const parseArticleLogic = async(links) => {
           warn.info(`pageNum`, pageNum);
           orgLog.log(`links`, links);
           warn.info(`links`, links);
-          if(nowPage===0){
+          if(totalPage===0){
             totalPage = pageNum;
           }  
           nowPage = pageNum;
@@ -122,11 +130,17 @@ const parseArticleLogic = async(links) => {
           orgLog.log(`proccessed index ${Board}/${Board}_${nowPage}.json`);
           info.info(`proccessed index ${Board}/${Board}_${nowPage}.json`);
           nowPage -= 1;
-          orgLog.log(`totalPage: ${totalPage}, proccessed percentage: ${(100 - ((nowPage/totalPage)*100)).toFixed(2)}% for ${Board}`);
-          info.info(`totalPage: ${totalPage},proccessed percentage: ${(100 - ((nowPage/totalPage)*100)).toFixed(2)}% for ${Board}`);
+          orgLog.log(`totalPage: ${totalPage}, nowPage: ${nowPage}, proccessed percentage: ${(100 - ((nowPage/totalPage)*100)).toFixed(2)}% for ${Board}`);
+          info.info(`totalPage: ${totalPage}, nowPage: ${nowPage}, proccessed percentage: ${(100 - ((nowPage/totalPage)*100)).toFixed(2)}% for ${Board}`);
           if (nowPage===0) break;
         }
       } catch (e) {
+        let status = e.response.status;
+        let errHeaders = e.response.headers;
+        orgLog.error(`[error] request url: ${requestURL}, load page error status: ${status}`);
+        error.error(`[error] request url: ${requestURL}, load page error status: ${status}`); 
+        orgLog.error(`[error] request url: ${requestURL}, load page error headers:`, errHeaders);
+        error.error(`[error] request url: ${requestURL}, load page error headers:`, errHeaders) 
         orgLog.error(`[error] request url: ${requestURL}, load page error: ${e.toString()}`);
         error.error(`[error] request url: ${requestURL}, load page error: ${e.toString()}`);
         nowPage -=1;
