@@ -1,14 +1,15 @@
-const obersableList = require('./ptt-popular-board-list.json');
+// const obersableList = require('./ptt-popular-board-list.json');
 const {pttCrawler} = require('./index');
 //console.log(obersableList);
 const offset = 8;
-(async()=>{
+const proccessCrawl = async(obersableList)=>{
+  // console.log(Array.isArray(obersableList));
   for (let idx = 0; idx < obersableList.length - offset; idx+=offset) {
       let promiseList = [];
       let resultList = [];
       for (let idxOffSet = idx; idxOffSet < offset+idx; idxOffSet++){
-        console.log(`start to crawl ${obersableList[idxOffSet].english_name}`);
-        promiseList.push(pttCrawler(obersableList[idxOffSet].english_name));
+        console.log(`start to crawl ${obersableList[idxOffSet]}`);
+        promiseList.push(pttCrawler(obersableList[idxOffSet]));
       }
       try {
         resultList = await Promise.all(promiseList);
@@ -16,4 +17,6 @@ const offset = 8;
         console.log(e.toString());
       }
   }
-})();
+};
+
+module.exports = { proccessCrawl };

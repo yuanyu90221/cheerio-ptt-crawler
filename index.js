@@ -4,7 +4,7 @@ const cheerio = require('cheerio');
 const { parsePageLogic } = require('./lib/page_parser');
 const { parseArticleLogic } = require('./lib/article_parser');
 const orgLog = require('console');
-const { setupLogPath ,info, warn, error, getNewLogger} = require('./logger/logger');
+const { setupLogPath ,info, warn, error} = require('./logger/logger');
 // set up incoming params
 let Board = 'Gossiping', nowPage = 0, writeToFile = false;
 /**
