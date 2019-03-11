@@ -3,6 +3,7 @@ const fs = require('fs');
 const cheerio = require('cheerio');
 const { parsePageLogic } = require('./lib/page_parser');
 const { parseArticleLogic } = require('./lib/article_parser');
+const { pttArticleDao } = require('./daos/pttArticleDao');
 const orgLog = require('console');
 const { setupLogPath ,info, warn, error} = require('./logger/logger');
 // set up incoming params
@@ -29,7 +30,7 @@ const initSetup = ()=> {
 /**
  * @description do the crawl logic
  */
-const pttCrawler = async(Board='Gossiping', nowPage=0, writeToFile='false')=>{
+const pttCrawler = async(Board='Gossiping',keywords=[], nowPage=0, writeToFile='false')=>{
     let totalPage = 0;
     setupLogPath(Board);
     let infoLogger = info(Board), errorLogger = error(Board), warnLogger = warn(Board);
@@ -48,6 +49,7 @@ const pttCrawler = async(Board='Gossiping', nowPage=0, writeToFile='false')=>{
           error.error(`${requestURL} not exist`);
         } else {
           let html = result.data;
+          let insertResults = null;
           // parse Page logic
           let {prevLink, pageNum, links} = await parsePageLogic(cheerio, html);
           orgLog.log(`prevLink`, prevLink);
@@ -63,6 +65,38 @@ const pttCrawler = async(Board='Gossiping', nowPage=0, writeToFile='false')=>{
           // load links logic
           let articleInfo = [];
           articleInfo = await parseArticleLogic(cheerio, axios, links, orgLog, infoLogger, errorLogger);
+          // match keywords
+          let articleDataArray = [];
+          for(let artIdx =0; artIdx < articleInfo.length; artIdx++){
+            let article = articleInfo[artIdx];
+            article.boardName = article.postInfo.board;
+            article.postInfo.time = new Date(article.postInfo.time);
+            let keywordsArr = [];
+            for(let keyIdx=0;keyIdx<keywords.length; keyIdx++){
+              let keyword = keywords[keyIdx];
+              let {title} = article.postInfo;
+              if (title.includes(keyword)){
+                keywordsArr.push(keyword);
+              }
+            }
+            article.keywords = keywordsArr;
+            if (keywordsArr.length > 0) {
+              articleDataArray.push(article);
+            }
+          }
+          if (articleDataArray.length > 0) {
+            try {
+              insertResults = await pttArticleDao.insertMany(articleDataArray);
+              info.info(`[pttArticleDao] insert Article length :${insertResults.length}`);
+              orgLog.log(`[pttArticleDao] insert Article length :${insertResults.length}`);
+            } catch (e) {
+              orgLog.error(`[pttArticleDao] insert Article error with data:`, articleDataArray);
+              errorLogger.error(`[pttArticleDao] insert Article error with data:`, articleDataArray);
+              orgLog.error(`[pttArticleDao] insert error with message: ${e.toString()}`);
+              errorLogger.error(`[pttArticleDao] insert error with message: ${e.toString()}`);
+            }
+          }
+          // write file process
           if (writeToFile==='true') {
             if (!fs.existsSync('./data')) fs.mkdirSync('./data');
             if (!fs.existsSync(`./data/${Board}`)) fs.mkdirSync(`./data/${Board}`);

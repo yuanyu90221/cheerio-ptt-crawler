@@ -9,7 +9,7 @@ const proccessCrawl = async(obersableList)=>{
       let resultList = [];
       for (let idxOffSet = idx; idxOffSet < offset+idx; idxOffSet++){
         console.log(`start to crawl ${obersableList[idxOffSet]}`);
-        promiseList.push(pttCrawler(obersableList[idxOffSet]));
+        promiseList.push(pttCrawler(obersableList[idxOffSet],['問卦','美女']));
       }
       try {
         resultList = await Promise.all(promiseList);

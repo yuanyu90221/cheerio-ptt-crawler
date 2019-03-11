@@ -1,3 +1,6 @@
 {
-  "isRunOnDocker":false
+  "isRunOnDocker":false,
+  "dbName":"admin",
+  "dbDomain":"localhost",
+  "port":27017
 }
