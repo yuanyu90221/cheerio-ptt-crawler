@@ -6,6 +6,7 @@ const { parseArticleLogic } = require('./lib/article_parser');
 const { pttArticleDao } = require('./daos/pttArticleDao');
 const orgLog = require('console');
 const { setupLogPath ,info, warn, error} = require('./logger/logger');
+const moment = require('moment');
 // set up incoming params
 let Board = 'Gossiping', nowPage = 0, writeToFile = false;
 /**
@@ -70,7 +71,7 @@ const pttCrawler = async(Board='Gossiping',keywords=[], nowPage=0, writeToFile='
           for(let artIdx =0; artIdx < articleInfo.length; artIdx++){
             let article = articleInfo[artIdx];
             article.boardName = article.postInfo.board;
-            article.postInfo.time = new Date(article.postInfo.time);
+            article.postInfo.time = moment(article.postInfo.time).unix();
             let keywordsArr = [];
             for(let keyIdx=0;keyIdx<keywords.length; keyIdx++){
               let keyword = keywords[keyIdx];

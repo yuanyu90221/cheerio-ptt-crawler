@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const { getConnection } = require('./db');
 const conn = getConnection();
+const moment = require('moment');
 const pttArticleSchema = new Schema({
   _id: String,
   boardName: {
@@ -23,8 +24,8 @@ const pttArticleSchema = new Schema({
       default: ''
     },
     time: {
-      type: Date,
-      default: Date.now
+      type: Number,
+      default: moment().unix()
     }
   },
   pushInfo: {
@@ -37,8 +38,8 @@ const pttArticleSchema = new Schema({
           default: ''
         },
         time: {
-          type: Date,
-          default: null
+          type: String,
+          default: ''
         }
       }
     ],
@@ -51,8 +52,8 @@ const pttArticleSchema = new Schema({
           default: ''
         },
         time: {
-          type: Date,
-          default: null
+          type: String,
+          default: ''
         }
       }
     ],
@@ -65,8 +66,8 @@ const pttArticleSchema = new Schema({
           default: ''
         },
         time: {
-          type: Date,
-          default: null
+          type: String,
+          default: ''
         }
       }
     ]
