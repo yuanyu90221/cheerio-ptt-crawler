@@ -7,8 +7,8 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "node crawlerLogic",
-    "crawl": "node crawlerLogic",
+    "test": "node services/worker",
+    "crawl": "node services/worker",
     "ws-server": "nodemon ws-server"
   },
   "keywords": [],
