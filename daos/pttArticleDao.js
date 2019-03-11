@@ -1,5 +1,15 @@
 const {pttArticle} = require('../models/pttArticle');
-
+const deleteTarget = async(criteria)=>{
+  return new Promise((resolve, reject)=>{
+    pttArticle.deleteMany({_id: criteria._id}, (err, docs)=>{
+      if(err) {
+        reject(err);
+      }
+      console.log(`[pttArticleDao] delete docs:`, docs);
+      resolve(docs); 
+    });
+  });
+};
 const pttArticleDao = {
   insertMany: async (arr)=>{
     return pttArticle.insertMany(arr, (err, docs)=>{
@@ -10,17 +20,7 @@ const pttArticleDao = {
       return docs;
     });
   },
-  deleteTarget: async(criteria)=>{
-    return new Promise((resolve, reject)=>{
-      pttArticle.deleteMany({_id: criteria._id}, (err, docs)=>{
-        if(err) {
-          reject(err);
-        }
-        console.log(`[pttArticleDao] delete docs:`, docs);
-        resolve(docs); 
-      });
-    });
-  },
+  deleteTarget: deleteTarget,
   findAll: async (criteria, skip, limit) => {
     criteria = criteria? criteria: {};
     skip = skip? Number(skip):0;

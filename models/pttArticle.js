@@ -3,6 +3,7 @@ const { Schema } = mongoose;
 const { getConnection } = require('./db');
 const conn = getConnection();
 const pttArticleSchema = new Schema({
+  _id: String,
   boardName: {
     type: String,
     default: ''

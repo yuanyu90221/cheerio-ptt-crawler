@@ -77,6 +77,7 @@ const pttCrawler = async(Board='Gossiping',keywords=[], nowPage=0, writeToFile='
               let {title} = article.postInfo;
               if (title.includes(keyword)){
                 keywordsArr.push(keyword);
+                await pttArticleDao.deleteTarget(article._id);
               }
             }
             article.keywords = keywordsArr;
@@ -87,8 +88,8 @@ const pttCrawler = async(Board='Gossiping',keywords=[], nowPage=0, writeToFile='
           if (articleDataArray.length > 0) {
             try {
               insertResults = await pttArticleDao.insertMany(articleDataArray);
-              info.info(`[pttArticleDao] insert Article length :${insertResults.length}`);
-              orgLog.log(`[pttArticleDao] insert Article length :${insertResults.length}`);
+              info.info(`[pttArticleDao] insert Article length :${articleDataArray.length}`);
+              orgLog.log(`[pttArticleDao] insert Article length :${articleDataArray.length}`);
             } catch (e) {
               orgLog.error(`[pttArticleDao] insert Article error with data:`, articleDataArray);
               errorLogger.error(`[pttArticleDao] insert Article error with data:`, articleDataArray);
