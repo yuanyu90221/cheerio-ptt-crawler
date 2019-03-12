@@ -9,7 +9,21 @@
 ```
 cheerio
 axios
+mongoose
 ```
+## pre-installation
+建立local mongoDB 或使用 資料夾下的docker-compose.yml
+
+run-up 一個local mongodb
+
+## 建立MongoDB with docker-compose.yml
+
+```
+export MONGODB_USER=${自訂user};
+export MONGODB_PASSWD=${自訂passwd};
+```
+注意 這邊的 自訂user跟自訂passwd為連線 admin DB的auth帳密
+之後的連線都需要用這兩個環境變數
 
 ## how to use
 
@@ -165,3 +179,14 @@ axios
     }
 ```
 [DB-Schema](https://hackmd.io/s/S12pu4l84)
+
+## Notice 需設定 config file, 以及 export MONGODB_USER=${自訂user}; export MONGODB_PASSWORD=${自訂passwd}才能 run 
+config/mongodb.json
+```
+{
+  "isRunOnDocker":false,
+  "dbName":"admin",
+  "dbDomain":"localhost",
+  "port":27017
+}
+```
