@@ -11,6 +11,17 @@ const deleteTarget = async(criteria)=>{
   });
 };
 const pttArticleDao = {
+  upSertArticle: async (article)=>{
+    let options = {upsert: true, new: true, setDefaultsOnInsert: true, useFindAndModify: false};
+    return new Promise((resolve, reject)=>{
+      pttArticle.findOneAndUpdate({_id: article._id}, article, options, (err, result)=>{
+        if(err) {
+          reject(err);
+        }
+        resolve(result);
+      });
+    });
+  },
   insertMany: async (arr)=>{
     return pttArticle.insertMany(arr, (err, docs)=>{
       if (err) {

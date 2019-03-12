@@ -9,7 +9,6 @@ const pttArticleSchema = new Schema({
     type: String,
     default: ''
   },
-  keywords: [String],
   postInfo: {
     author: {
       type: String,
@@ -25,7 +24,7 @@ const pttArticleSchema = new Schema({
     },
     time: {
       type: Number,
-      default: moment().unix()
+      default: 0
     }
   },
   pushInfo: {
@@ -89,6 +88,10 @@ const pttArticleSchema = new Schema({
       type:String,
       default: ''
     }]
+  },
+  isVisible: {
+    type: Boolean,
+    default: true
   }
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 const pttArticle = conn.model('pttArticle', pttArticleSchema, 'pttArticle');

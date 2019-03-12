@@ -31,7 +31,7 @@ const initSetup = ()=> {
 /**
  * @description do the crawl logic
  */
-const pttCrawler = async(Board='Gossiping',keywords=[], nowPage=0, writeToFile='false')=>{
+const pttCrawler = async(Board='Gossiping', nowPage=0, writeToFile='false')=>{
     let totalPage = 0;
     setupLogPath(Board);
     let infoLogger = info(Board), errorLogger = error(Board), warnLogger = warn(Board);
@@ -67,35 +67,21 @@ const pttCrawler = async(Board='Gossiping',keywords=[], nowPage=0, writeToFile='
           let articleInfo = [];
           articleInfo = await parseArticleLogic(cheerio, axios, links, orgLog, infoLogger, errorLogger);
           // match keywords
-          let articleDataArray = [];
           for(let artIdx =0; artIdx < articleInfo.length; artIdx++){
             let article = articleInfo[artIdx];
             article.boardName = article.postInfo.board;
-            article.postInfo.time = moment(article.postInfo.time).unix();
-            let keywordsArr = [];
-            for(let keyIdx=0;keyIdx<keywords.length; keyIdx++){
-              let keyword = keywords[keyIdx];
-              let {title} = article.postInfo;
-              if (title.includes(keyword)){
-                keywordsArr.push(keyword);
-                await pttArticleDao.deleteTarget(article._id);
-              }
-            }
-            article.keywords = keywordsArr;
-            if (keywordsArr.length > 0) {
-              articleDataArray.push(article);
-            }
-          }
-          if (articleDataArray.length > 0) {
+            article.postInfo.time = moment(new Date(article.postInfo.time.trim())).unix();
             try {
-              insertResults = await pttArticleDao.insertMany(articleDataArray);
-              info.info(`[pttArticleDao] insert Article length :${articleDataArray.length}`);
-              orgLog.log(`[pttArticleDao] insert Article length :${articleDataArray.length}`);
-            } catch (e) {
-              orgLog.error(`[pttArticleDao] insert Article error with data:`, articleDataArray);
-              errorLogger.error(`[pttArticleDao] insert Article error with data:`, articleDataArray);
-              orgLog.error(`[pttArticleDao] insert error with message: ${e.toString()}`);
-              errorLogger.error(`[pttArticleDao] insert error with message: ${e.toString()}`);
+              let result = await pttArticleDao.upSertArticle(article);
+              infoLogger.info(`[pttArticleDao] insert Article ${article._id} :`, article);
+              orgLog.log(`[pttArticleDao] insert Article ${article._id} :`, article);
+            }
+            catch(err)
+            {
+              orgLog.error(`[pttArticleDao] insert Article  ${article._id} error with data:`, article);
+              errorLogger.error(`[pttArticleDao] insert Article ${article._id} error with data:`, article);
+              orgLog.error(`[pttArticleDao] insert error with message: ${err.toString()}`);
+              errorLogger.error(`[pttArticleDao] insert error with message: ${err.toString()}`);
             }
           }
           // write file process
