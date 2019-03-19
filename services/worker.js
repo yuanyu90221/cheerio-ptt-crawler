@@ -20,17 +20,22 @@ const creaeteNewWorker = (i, cluster) => {
 // const testObj = {test: 1};
 let processedSet = [];
 let workerPool = [];
-for (let i = 0; i < os.cpus().length/2; i++) {
-  let currentList = obersableList.map(item=>item.english_name).filter((item, idx)=> idx%os.cpus().length=== i);
+for (let i = 0; i < os.cpus().length/4; i++) {
+  let currentList = obersableList.map(item=>item.english_name).filter((item, idx)=> idx%(os.cpus().length/4)=== i);
   processedSet.push(currentList);
 }
 if (cluster.isMaster) {
-  for (let i = 0; i < os.cpus().length/2; i++) {
-    let new_worker = creaeteNewWorker(i, cluster);   
-    new_worker.on('exit', (code, signal)=>{
-      console.log(`worker with id: ${new_worker.id} exit with code: ${code}, signal: ${signal} `);
-      creaeteNewWorker(new_worker.id, cluster);
+  for (let i = 0; i < os.cpus().length/4; i++) {
+    let result = workerPool.find((item, idx)=> {
+      return item == i;
     });
+    if (!result) {
+      let new_worker = creaeteNewWorker(i, cluster);   
+      new_worker.on('exit', (code, signal)=>{
+        console.log(`worker with id: ${new_worker.id} exit with code: ${code}, signal: ${signal} `);
+        creaeteNewWorker(new_worker.id, cluster);
+      });
+    }
   }
 } else {
   console.log(`WORKER_NAME:`,process.env['WORKER_NAME']);
