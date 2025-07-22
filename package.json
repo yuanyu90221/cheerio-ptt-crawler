@@ -15,7 +15,7 @@
   "author": "json-Laing",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.7.4",
+    "axios": "^1.8.2",
     "cheerio": "^1.0.0-rc.12",
     "cluster": "^0.7.7",
     "express": "^4.21.2",
